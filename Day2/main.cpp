@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Vector.h>
 #include <Streaming.h>
+#include <string.h>
 
 const int INPU_COUNT_MAX = 20000;
 const int DATA_COUNT_MAX = 2000;
@@ -9,12 +10,25 @@ char inbufferStorage[INPU_COUNT_MAX];
 Vector<char> inbuffer;
 int transfertimer = 0;
 bool xfercomplete = false;
-char conversionbuffer[10];
+char conversionbuffer[20];
 int buffpointer = 0;
-int dataStorage[DATA_COUNT_MAX];
-Vector<int> data;
-int largerthanprev = -1;
-int prev = 0;
+typedef enum direction
+{
+  FOWARD = 0,
+  DOWN = 1,
+  UP = 2
+}direction_t;
+
+typedef struct movement
+{
+  int distance;
+  direction_t direction;
+}movement_t;
+
+movement_t dataStorage[DATA_COUNT_MAX];
+Vector<movement_t> data;
+int depth = 0;
+int horizontal = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -56,8 +70,31 @@ void loop() {
         conversionbuffer[buffpointer] = '\0';
         //Serial.println(inBuffer);
         buffpointer = 0;
-        int curval;
-        curval = atoi(conversionbuffer);
+        movement_t curval;
+        char *pch;
+        pch = strtok(conversionbuffer, " ");
+        if(pch != NULL)
+        {
+          switch(pch[0])
+          {
+            case 'f':
+            curval.direction = direction_t::FOWARD;
+            break;
+            case 'u':
+            curval.direction = direction_t::UP;
+            break;
+            case 'd':
+            curval.direction = direction_t::DOWN;
+            break;
+          }
+          pch = strtok(NULL, " ");
+        }
+        if(pch != NULL)
+        {
+          curval.distance = atoi(pch);
+        }
+        Serial << "Direction: " << curval.direction << endl;
+        Serial << "Distance: " << curval.distance << endl;
         data.push_back(curval);
         //Serial.println(curval, DEC);
         
@@ -65,7 +102,7 @@ void loop() {
         case 0x0D: //Carriage return
         break;
         default:
-        if(element >= 0x30 && element <= 0x39)
+        if((element >= 0x30 && element <= 0x39) || (element >= 0x61 && element <= 0x7a) || element == 0x20)
         {
           conversionbuffer[buffpointer] = element;
           buffpointer++;
@@ -73,19 +110,24 @@ void loop() {
         break;      
       }
     }
-    Serial << "Data: " << endl;
-    Serial << data;
-    for(int i; i < (data.size() - 2); i++)
+    for(movement_t movement : data )
     {
-      int val = data.at(i) + data.at(i+1) + data.at(i+2);
-      Serial << "Val = " <<  val << endl;
-      if(val > prev)
+      switch(movement.direction)
       {
-        largerthanprev++;
+        case direction_t::FOWARD:
+        horizontal += movement.distance;
+        break;
+        case direction_t::DOWN:
+        depth += movement.distance;
+        break;
+        case direction_t::UP:
+        depth -= movement.distance;
+        break;
       }
-      prev = val;
     }
-    Serial << "Values larger than prev: " << largerthanprev << endl;
+    Serial << "Final depth: " << depth << " Final horizontal: " << horizontal << endl;
+    Serial << "Multiplied: " << depth*horizontal << endl;
+    
   }
 
   if(!xfercomplete)
