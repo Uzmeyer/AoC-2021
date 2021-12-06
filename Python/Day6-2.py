@@ -1,22 +1,34 @@
+import collections
+
 import numpy as np
 import time
 from matplotlib import pyplot as plt
 
 scriptstart = time.time()
-##lanternfish = np.genfromtxt('Day6_input_example.txt', delimiter=',', dtype=int)
-lanternfish = np.zeros(1)
-fishcount = []
-for i in range(50):
-    start = time.time()
-    newfish = 0
-    for j, fish in enumerate(lanternfish):
-        lanternfish[j] = lanternfish[j] - 1
-        if lanternfish[j] < 0:
-            newfish = newfish + 1
-            lanternfish[j] = 6
 
-    lanternfish = np.append(lanternfish, np.full(newfish, 8))
-    fishcount.append(len(lanternfish))
+lanternfish = np.genfromtxt('Day6_input.txt', delimiter=',', dtype=int)
 
-plt.plot(fishcount)
-plt.show()
+timercount = collections.Counter(lanternfish)
+fishtracker = collections.deque()
+for i in range(7):
+   fishtracker.append(timercount[i])
+
+seveneight = collections.deque()
+seveneight.append(0)
+seveneight.append(0)
+fishtracker.rotate(-1)
+
+for i in range(256):
+    fishtracker.rotate(-1)
+    seveneight.append(fishtracker[6])
+    fishtracker[6] = fishtracker[6] + seveneight.popleft()
+
+fishcount =  0
+for i in range(7):
+    fishcount = fishcount + fishtracker[i]
+
+fishcount = fishcount + seveneight[0]
+
+
+print("Number of Lanternfish after 80 days: " + str(fishcount) + " Script took " + str(time.time() - scriptstart) + " seconds")
+print("welp")
