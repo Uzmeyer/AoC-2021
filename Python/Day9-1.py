@@ -8,45 +8,43 @@ infile = open('D9_input_example.txt')
 lines = infile.readlines()
 ymax = len(lines) - 1
 xmax = len(lines[0].rstrip()) - 1
-hightmap = np.zeros((xmax + 1,ymax + 1), int)
-def checkSurroundings(point):
+hightmap = np.zeros((xmax + 1, ymax + 1), int)
+
+
+def checkSurroundings(point, _xmax, _ymax):
     x, y = point
     pointhight = hightmap[x][y]
     lowpoint = False
-    match point:
-        case (0, 0): ##Origin
+    if x == 0:
+        if y == 0: #origin
             if hightmap[x][y+1] > pointhight and hightmap[x+1][y] > pointhight:
                 lowpoint = True
-
-        case (0, ymax): ##bottom left corner
+        elif y == _ymax: #bottom left corner
             if hightmap[x][y-1] > pointhight and hightmap[x][y+1] > pointhight:
                 lowpoint = True
+        else: # left edge
+            if hightmap[x][y-1] > pointhight and hightmap[x][y+1] > pointhight and hightmap[x+1][y] > pointhight:
+                lowpoint = True
 
-        case (xmax, 0): ##top right corner
+    elif x == _xmax:
+        if y == 0: #top right corner
             if hightmap[x-1][y] > pointhight and hightmap[x][y+1] > pointhight:
                 lowpoint = True
-
-        case (xmax, ymax): ##bottom right corner
+        elif y == _ymax: #bottom right corner
             if hightmap[x][y-1] > pointhight and hightmap[x-1][y] > pointhight:
                 lowpoint = True
-
-        case (0, y): ##Left edge
-            if hightmap[x][y-1] > pointhight and hightmap[x][y+1] > pointhight and hightmap[x+1][y] > pointhight:
+        else: #right edge
+            if hightmap[x][y-1] > pointhight and hightmap[x][y+1] > pointhight and hightmap[x-1][y] > pointhight:
                 lowpoint = True
 
-        case (x, 0): ##top edge
+    else:
+        if y == 0: #top edge
             if hightmap[x-1][y] > pointhight and hightmap[x+1][y] > pointhight and hightmap[x][y+1] > pointhight:
                 lowpoint = True
-
-        case (xmax, y): ##right edge
-            if hightmap[x][y-1] > pointhight and hightmap[x][y+1] > pointhight and hightmap[x+1][y] > pointhight:
+        elif y == _ymax: #bottom edge
+            if hightmap[x-1][y] > pointhight and hightmap[x+1][y] > pointhight and hightmap[x][y-1] > pointhight:
                 lowpoint = True
-
-        case (x, ymax): ##bottom edge
-            if hightmap[x-1][y] > pointhight and hightmap[x+1][y] > pointhight and hightmap[x][y+1] > pointhight:
-                lowpoint = True
-
-        case _: ##everything else
+        else: #everything else
             if hightmap[x-1][y] > pointhight and hightmap[x+1][y] > pointhight and hightmap[x][y+1] > pointhight and hightmap[x][y-1] > pointhight:
                 lowpoint = True
 
@@ -59,9 +57,14 @@ for i in range(xmax + 1):
         hightmap[i][j] = int(lines[j][i])
 
 lowpoints = []
-for i in range(xmax + 1):
-    for j in range(ymax + 1):
-        if checkSurroundings((i, j)):
-            lowpoints.append(((i, j), hightmap[i][j]))
+for x in range(xmax + 1):
+    for y in range(ymax + 1):
+        if checkSurroundings((x, y), xmax, ymax):
+            lowpoints.append(((x, y), hightmap[x][y]))
 
+danger = 0
+for lowpoint in lowpoints:
+    danger = danger + lowpoint[1] + 1
+
+print('Danger: ' + str(danger))
 print('Welp')
